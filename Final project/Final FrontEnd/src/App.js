@@ -46,7 +46,7 @@ function App() {
     <Route path='/bookevent' component={Bookevent} />
     <Route path='/cancelevent' component={Cancelevent} />
     <Route path='/providerlogin' component={ProviderLogin} />
-    <Route path='/w' component={Signup} />
+    <Route path='/signup' component={Signup} />
     <Route path='/spsignup' component={SPSignup} />
     <Route path='/confirmation' component={Confirmation} />
     <Route path='/admin4' component={Admin4} />
