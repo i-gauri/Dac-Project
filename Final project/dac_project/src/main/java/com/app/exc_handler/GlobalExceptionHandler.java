@@ -1,0 +1,81 @@
+package com.app.exc_handler;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.validation.ConstraintViolationException;
+
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+
+import com.app.customErrorHandling.AdminHandling;
+import com.app.customErrorHandling.CustomerHandlingException;
+import com.app.dto.ErrorResponse;
+
+@ControllerAdvice // stereotype annotation . Class level annotation .
+//Supplies common advice to all controllers  n rest controllers.
+public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+	@ExceptionHandler(AdminHandling .class)
+	public ResponseEntity<?> handleUserHandlingException(AdminHandling exc, WebRequest request) {
+		System.out.println("handling  admin res not found exc ");
+		ErrorResponse errResp = new ErrorResponse(exc.getMessage(), request.getDescription(false));
+		return new ResponseEntity<>(errResp, HttpStatus.NOT_FOUND);
+	}
+	@ExceptionHandler(CustomerHandlingException .class)
+	public ResponseEntity<?> handleUserHandlingException(CustomerHandlingException exc, WebRequest request) {
+		System.out.println("handling  customer res not found exc ");
+		ErrorResponse errResp = new ErrorResponse(exc.getMessage(),"Email or password invalid");
+		return new ResponseEntity<>(errResp, HttpStatus.NOT_FOUND);
+	}
+
+	@ExceptionHandler(ConstraintViolationException.class)
+	public ResponseEntity<?> handleConstraintViolationException(ConstraintViolationException e, WebRequest request) {
+		System.out.println("handling constraint violation exc");
+		ErrorResponse errResp = new ErrorResponse(e.getMessage(), request.getDescription(false));
+		return new ResponseEntity<>(errResp, HttpStatus.BAD_REQUEST);
+	}
+
+	// This Exception is thrown when a method argument fails validation typically
+	// due to @Valid style validation
+	// or request body content is required.
+	@Override
+	protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
+			HttpHeaders headers, HttpStatus status, WebRequest request) {
+		System.out.println("handling method arg not valid");
+		
+		
+		List<String> validationErrs=new ArrayList<>();
+		for(FieldError err : ex.getBindingResult().getFieldErrors())
+			validationErrs.add(err.getDefaultMessage());
+		
+		ErrorResponse errResp=new ErrorResponse("Validation Failed", validationErrs.toString());
+		return new ResponseEntity<Object>(errResp, status);//HTTP 400
+
+	}
+	//handle REST call related exc
+	@ExceptionHandler(RestClientException.class)
+	public ResponseEntity<?> handleRestClntException(RestClientException exc, WebRequest request) {
+		System.out.println("in handle rest clnt exception "+exc);
+		System.out.println(exc.getMostSpecificCause());
+		ErrorResponse errResp = new ErrorResponse("Rest API Call Failed ", request.getDescription(false));
+		return new ResponseEntity<>(errResp, HttpStatus.INTERNAL_SERVER_ERROR);
+	}
+
+	// handle ANY other exception
+	@ExceptionHandler(Exception.class)
+	public ResponseEntity<?> handleAnyException(Exception exc, WebRequest request) {
+		System.out.println("in handle exception "+exc);
+		
+		ErrorResponse errResp = new ErrorResponse(exc.getMessage(), request.getDescription(false));
+		return new ResponseEntity<>(errResp, HttpStatus.INTERNAL_SERVER_ERROR);
+	}
+
+}
